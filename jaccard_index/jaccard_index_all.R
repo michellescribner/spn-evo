@@ -1,0 +1,133 @@
+# Compute Jaccard Similarity for evolved populations of S. pneumoniae and display as heat map
+
+library(tidyverse) # v1.3.1
+library(vegan) # v2.5-7
+library(cowplot) # v1.1.1 for get_legend
+library(grid) # for unit()
+
+# Begin with filtered data frame of SNPs 
+# In prior step, SNPs fixed in the ancestral strain, <10% in a sample, and <100% (15 passages) or <200% (29 passages) cumulative frequency per lineage were removed
+df <- readr::read_csv("~/Documents/pitt/streppneumo/post_breseq_filtering/output/snps_after_filtering.csv")
+
+# Make column combining gene and description
+df <- df %>%
+  mutate(desc_gene = paste(description, gene, sep = ":")) 
+
+# Designate order of lineages for plotting
+factors <- readr::read_csv("~/Documents/pitt/streppneumo/jaccard_index/treat_factors.csv")
+df <- left_join(df,factors) %>%
+  arrange(order)
+
+# Pivot so genes are rows, lineages are columns, values are sum of mutation frequency within the gene
+gene_by_lineage <- df %>%
+  pivot_wider(id_cols = desc_gene, names_from = lineage, 
+              values_from = freq, values_fill = 0, values_fn = sum)
+gene_by_lineage <- gene_by_lineage %>% column_to_rownames(., var = 'desc_gene')
+
+# Set any allele frequency greater than 0 to 1
+gene_by_lineage[gene_by_lineage > 0] <- 1
+
+# Transpose
+gene_by_lineage <- t(gene_by_lineage)
+
+# Calculate Jaccard similarity indices
+jacc_diss <- as.matrix(vegdist(gene_by_lineage, method="jaccard", binary=TRUE)) 
+jacc_sim <- 1-jacc_diss
+diag(jacc_sim) <- 1
+
+# Numeric plotting positions: left-to-right for columns; top-to-bottom for rows (so reverse rows)
+col_names <- colnames(jacc_sim)
+row_names <- rownames(jacc_sim)
+n <- length(col_names)
+
+# Convert to long format for ggplot
+long_df <- as.data.frame(jacc_sim) %>%
+  rownames_to_column("row") %>%
+  pivot_longer(-row, names_to = "col", values_to = "value")
+
+long_df <- long_df %>%
+  mutate(
+    col_idx = as.integer(factor(col, levels = col_names)),
+    row_idx = as.integer(factor(row, levels = row_names)),
+    x = col_idx,
+    y = n - row_idx + 1
+  )
+
+# Mask upper triangle (keep lower triangle + diagonal)
+long_df <- long_df %>%
+  mutate(value = ifelse(row_idx >= col_idx, value, NA_real_))
+
+# Derive treatment labels. 
+# Strip a trailing "L" followed by digits, e.g., "AzM0L1" -> "AzM0"
+strip_rep_regex <- "L\\d+$"   
+
+col_meta <- data.frame(col = col_names, x = seq_len(n), stringsAsFactors = FALSE) %>%
+  mutate(treat = gsub(strip_rep_regex, "", col))
+
+row_meta <- data.frame(row = row_names, y = seq_len(n), stringsAsFactors = FALSE) %>%
+  # row positions are reversed in the plot
+  mutate(y = rev(y), treat = gsub(strip_rep_regex, "", row))
+
+# compute center positions per treatment (mean position of replicates)
+col_centers <- col_meta %>%
+  group_by(treat) %>%
+  summarize(center = mean(x)) %>%
+  ungroup()
+
+row_centers <- row_meta %>%
+  group_by(treat) %>%
+  summarize(center = mean(y)) %>%
+  ungroup()
+
+# Make the plot
+p_jaccard <- ggplot(long_df, aes(x = x, y = y, fill = value)) +
+  geom_raster() +                             
+  scale_fill_viridis_c(name = "Jaccard\nSimilarity\n", na.value = "white") +
+  # show one label per treatment at the computed centers
+  scale_x_continuous(
+    breaks = col_centers$center,
+    labels = col_centers$treat,
+    limits = c(0.5, n + 0.5),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    breaks = row_centers$center,
+    labels = row_centers$treat,
+    limits = c(0.5, n + 0.5),
+    expand = c(0, 0)
+  ) +
+  coord_fixed() +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.title = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    axis.text.y = element_text(hjust = 1),
+    panel.grid = element_blank(),
+    legend.position = "none"
+  )
+
+print(p_jaccard)
+
+# ggsave("~/Documents/pitt/streppneumo/jaccard_index/jaccard_final.png", 
+#        plot = (p_jaccard), device = "png", dpi=300, width = 6, height = 6)
+
+# Extract legend grob from a copy of the plot that shows the legend on the right
+legend_grob <- get_legend(
+  p_jaccard + theme(
+    legend.position = "right",
+    legend.title = element_text(size = 10),
+    legend.text  = element_text(size = 10)
+  )
+)
+
+# Place legend in the upper-right / upper-triangle region
+p_jaccard_withlegend <- p_jaccard +
+  annotation_custom(
+    legend_grob,
+    xmin = n - 30,   # tweak these
+    xmax = n - 0.5,
+    ymin = n - 35,
+    ymax = n - 0.5
+  )
+
+p_jaccard_withlegend

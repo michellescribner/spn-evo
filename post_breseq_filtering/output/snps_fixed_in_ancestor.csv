@@ -1,0 +1,40 @@
+"gene_annot_desc","n()"
+"gor::C382R (TGC->CGC) ::glutathione-disulfide reductase",84
+"lacD::coding (897-898/981 nt)::tagatose-bisphosphate aldolase",84
+"msrB/SP_RS12835::intergenic (-79/+66)::peptide-methionine (R)-S-oxide reductase MsrB/UDP-galactopyranose mutase",81
+"mutS::pseudogene (2274/2534 nt)::DNA mismatch repair protein MutS",84
+"pdrM::coding (1213-1214/1362 nt)::sodium-coupled multidrug efflux MATE transporter PdrM",84
+"phtA::pseudogene (40/2450 nt)::pneumococcal histidine triad protein PhtA",84
+"queF::pseudogene (67/533 nt)::NADPH-dependent 7-cyano-7-deazaguanine reductase QueF",84
+"rplK/rplA::intergenic (+105/-102)::50S ribosomal protein L11/50S ribosomal protein L1",84
+"rpsG::K90E (AAA->GAA) ::30S ribosomal protein S7",84
+"SP_0148::L181F (TTG->TTC) ::amino acid ABC transporter substrate-binding protein",84
+"SP_0496/SP_0498::intergenic (-170/-123)::Na/Pi cotransporter family protein/bacterial Ig-like domain-containing protein",84
+"SP_0771/SP_RS03770::intergenic (-35/+49)::peptidylprolyl isomerase/hypothetical protein",84
+"SP_1045/SP_RS12090::intergenic (+82/-82)::diacylglycerol kinase family lipid kinase/alpha amylase N-terminal ig-like domain-containing protein",84
+"SP_1343::coding (359-360/1941 nt)::S9 family peptidase",84
+"SP_1772/SP_1773::intergenic (-157/+91)::accessory Sec-dependent serine-rich glycoprotein adhesin/IS630 transposase-related protein",1
+"SP_1851/SP_1852::intergenic (-54/+17)::PaaI family thioesterase/UDP-glucose--hexose-1-phosphate uridylyltransferase",84
+"SP_2105/glgP::intergenic (+974/+69)::hypothetical protein/glycogen/starch/alpha-glucan family phosphorylase",80
+"SP_2242::noncoding (16/72 nt)::tRNA-Glu",1
+"SP_2242::noncoding (32/72 nt)::tRNA-Glu",1
+"SP_RS00975::pseudogene (1283/1540 nt)::damage-inducible protein CinA",84
+"SP_RS02385::coding (85-86/258 nt)::hypothetical protein",43
+"SP_RS02385::D29G (GAC->GGC) ::hypothetical protein",2
+"SP_RS02420::pseudogene (113/451 nt)::N-acetyltransferase",84
+"SP_RS05110::coding (241/243 nt)::hypothetical protein",82
+"SP_RS05205/SP_1054::intergenic (+633/-198)::hypothetical protein/hypothetical protein",84
+"SP_RS05890/lepA::intergenic (-215/+241)::PTS sugar transporter subunit IIA/translation elongation factor 4",82
+"SP_RS05890/lepA::intergenic (-263/+193)::PTS sugar transporter subunit IIA/translation elongation factor 4",19
+"SP_RS05890/lepA::intergenic (-307/+148)::PTS sugar transporter subunit IIA/translation elongation factor 4",72
+"SP_RS05890/lepA::intergenic (-308/+148)::PTS sugar transporter subunit IIA/translation elongation factor 4",1
+"SP_RS08480::pseudogene (389/681 nt)::ABC transporter ATP-binding protein",84
+"SP_RS08480::pseudogene (680/681 nt)::ABC transporter ATP-binding protein",84
+"SP_RS12610::pseudogene (277/617 nt)::phosphoribulokinase",84
+"SP_RS12630::pseudogene (200/406 nt)::tyrosine-type recombinase/integrase",84
+"SP_RS12875/SP_RS13180::intergenic (+10/-499)::UDP-galactopyranose mutase/IS30 family transposase",84
+"SP_RS12875/SP_RS13180::intergenic (+55/-454)::UDP-galactopyranose mutase/IS30 family transposase",84
+"SP_RS12890/SP_1778::intergenic (+334/+104)::UDP-galactopyranose mutase/aquaporin",84
+"SP_RS13125::pseudogene (230/299 nt)::lactococcin 972 family bacteriocin",84
+"SP_RS13165::coding (95/159 nt)::hypothetical protein",83
+"tsaD::A65E (GCA->GAA) ::tRNA (adenosine(37)-N6)-threonylcarbamoyltransferase complex transferase subunit TsaD",84
