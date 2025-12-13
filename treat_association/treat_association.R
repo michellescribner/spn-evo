@@ -5,7 +5,7 @@ library(tidyverse)
 library(cowplot)
 
 setwd("~/Documents/pitt/streppneumo/treat_association/")
-  
+
 # Begin with snp df with snps fixed in the ancestral strain, <10%, and <100% or <200% cumulative frequency per lineage removed
 snps <- read.csv("~/Documents/pitt/streppneumo/post_breseq_filtering/output/snps_after_filtering.csv",header=TRUE)
 
@@ -65,20 +65,6 @@ output <- output %>%
   mutate(fdr = 0.05*num/nrow(output)) %>%
   mutate(sig = pvalue < fdr) 
 
-# genes_to_label <- output %>% filter(sig == TRUE) %>% select(gene)
-# genes_to_label$gene <- with(genes_to_label, ifelse(gene == "SP_1583", "SP_1583", 
-#                 paste0("*",gene,"*")))
-
-# output %>%
-#   ggplot(aes(x=num, y=transp, color = transp)) + 
-#   geom_point(size=3) +
-#   theme_bw() + 
-#   xlab("Gene") + ylab('-log10P') #+
-#   # geom_text_repel(aes(x=num, y=transp, label = gene), 
-#   #                 data = output[output$gene %in% genes_to_label$gene, ]) +
-#   # theme(legend.text = element_markdown())
-# ggsave("pvalues_fet.pdf", device = "pdf", height =4, width =5)
-
 # print table 
 table <- l %>%
   pivot_wider(id_cols = c(description,gene), names_from = immune, values_from = sum, values_fn = list(sum = sum), values_fill = list(freq = 0))
@@ -121,22 +107,31 @@ p_heatmap <- df_long %>%
 
 print(p_heatmap)
 
-# ggsave(
-#   filename = "immune_association.png",
-#   plot = p_heatmap,
-#   device = "png",
-#   dpi = 300,
-#   height = 1.5,
-#   width = 4
-# )
+# Add total lineages per condition
+# M0 (Macrophage depleted), Nd (Not depleted), and N0 (Neutrophil depleted) are condition labels
+total_lineages <- c(M0 = 30, Nd = 30, N0 = 30)  
 
-# Print contingency tables for significant genes
-# n <- l %>%
-#   filter(gene == "SP_1583") %>% 
-#   group_by(immune) %>% 
-#   summarize(mut = sum(sum)) 
-# ct <- t(matrix(c(n$mut, 30-n$mut), nrow=3, dimnames = list(c("M0", "N0", "Nd"), c("Mutated", "Not Mutated"))))
-# print(ct)
+# Calculate proportions of mutated lineages per gene per condition
+df_long_prop <- df_long %>%
+  mutate(proportion = value / total_lineages[condition])  # Calculate proportion
+
+# Create heatmap with proportions of lineages mutated
+p_heatmap_prop <- df_long_prop %>%
+  ggplot(aes(x = condition, y = gene, fill = proportion)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "#297b8e", limits = c(0,1)) +  
+  scale_y_discrete(labels = italic_if_not_SP) +  
+  geom_text(aes(label = sprintf("%.2f", proportion)), color = "black", size = 3) +  # Show proportion as label
+  labs(x = "Immune Condition", y = "Gene", fill = "Proportion", title = "Proportion of Lineages\nwith Mutations") +
+  theme_bw(base_size = 12) +
+  theme(legend.position = "none", 
+        axis.title.y = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10),
+        plot.title = element_text(size = 10, hjust = 0.5))
+
+# Print the heatmap
+print(p_heatmap_prop)
 
 
 # # # Perform Fisher's Exact Test for drug association
@@ -158,6 +153,7 @@ for(i in 1:length(genelist)) {
     summarize(mut = sum(sum))
   ct <- matrix(c(n$mut, c(45-n$mut[1], 18-n$mut[2], 18-n$mut[3], 9-n$mut[4])), 
                nrow=4, dimnames = list(c("CWSI", "DSI", "PSI", "RSI"), c("Mutated", "Not Mutated")))
+  print(genelist[i])
   print(ct)
   r <- fisher.test(ct)
   result_fetab[i] <- r$p.value
@@ -173,12 +169,6 @@ output <- output %>%
   mutate(num = 1:nrow(output)) %>%
   mutate(fdr = 0.05*num/nrow(output)) %>%
   mutate(sig = pvalue < fdr)
-
-output %>%
- ggplot(aes(x=num, y=transp, color = transp)) + geom_point(size=3) +
-  theme_bw() + xlab("Gene") + ylab('-log10P') #+
-  geom_text_repel(aes(x=num, y=transp, label = gene))
-# ggsave("pvalues_fetab.pdf", device = "pdf", height =4, width =5)
 
 # Print table 
 table <- l %>%
@@ -210,20 +200,36 @@ p_heatmap_a <- df_long %>%
 
 print(p_heatmap_a)
 
-# ggsave(
-#   filename = "antibiotic_association.png",
-#   plot = p_heatmap_a,
-#   device = "png",
-#   dpi = 300,
-#   height = 2,
-#   width = 4
-# )
+# Define total lineages per condition
+# These represent the total number of lineages in each Mechanism of Action (MoA) group
+total_lineages_moa <- c(CWSI = 45, DSI = 18, PSI = 18, RSI = 9)  
+
+# Calculate proportions for each gene across MoAs
+df_long_prop_moa <- df_long %>%
+  mutate(proportion = value / total_lineages_moa[condition]) 
+
+# Create heatmap with proportions as the metric
+p_heatmap_prop_moa <- df_long_prop_moa %>%
+  ggplot(aes(x = condition, y = gene, fill = proportion)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "#297b8e") +
+  scale_y_discrete(labels = italic_if_not_SP) +  
+  geom_text(aes(label = sprintf("%.2f", proportion)), color = "black", size = 3) +  # Format proportions to 2 decimal places
+  labs(x = "Antibiotic\nMechanism of Action", y = "Gene", fill = "Proportion") +
+  theme_bw() +
+  theme(legend.position = "none",  
+        axis.title.y = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10))
+
+# Print the heatmap
+print(p_heatmap_prop_moa)
 
 #------------ Plot Figure 1 -------------
 
 # # Can only be used if other plots are stored as objects 
 
-right <- plot_grid(p_heatmap, p_heatmap_a, ncol = 1, align = "v", rel_heights = c(1, 1.6), labels = c("C", ""))
+right <- plot_grid(p_heatmap_prop, p_heatmap_prop_moa, ncol = 1, align = "v", rel_heights = c(1, 1.6), labels = c("C", ""))
 top <- plot_grid(p_jaccard_withlegend, right, ncol = 2, rel_widths = c(2.4,1), labels = c("A", ""))
 bottom <- plot_grid(p, bottom_right, ncol = 2, rel_widths = c(1, 1.1), labels = c("B", ""))
 combined <- plot_grid(top, bottom, ncol = 1, align = "v", rel_heights = c(2, 1.3))
@@ -231,4 +237,6 @@ combined
 
 # save 
 ggsave("combined.png", combined, width = 10, height = 11, dpi = 300, units = "in")
+
+
 
