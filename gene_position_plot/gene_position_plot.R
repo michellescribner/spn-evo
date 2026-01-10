@@ -7,9 +7,29 @@ library(cowplot)
 
 pal <- c("#287D8EFF", "#10A53DFF", "#541352FF")
 
-setwd("~/Documents/pitt/streppneumo/gene_position_plot")
+setwd("~/spn-evo/gene_position_plot")
 
-snps <- read.csv("~/Documents/pitt/streppneumo/post_breseq_filtering/output/snps_after_filtering.csv")
+snps <- read.csv("~/spn-evo/post_breseq_filtering/output/snps_after_filtering.csv")
+
+# Create a named vector for substitution
+substitution <- c(
+  "Az" = "AZM",
+  "Ci" = "CIP",
+  "Im" = "IPM",
+  "Ce" = "CEF",
+  "Le" = "LVX",
+  "Li" = "LNZ",
+  "Ri" = "RIF",
+  "Va" = "VNC",
+  "Me" = "MEM",
+  "Pe" = "PEN"
+)
+
+# Replace values in 'Codes' column
+snps <- snps %>%
+  mutate(drug = substitution[drug]) %>%
+  mutate(treat = paste(drug, immune, sep = "-")) %>%
+  mutate(lineage = paste(treat, pop, sep = "")) 
 
 # Create a table of only ribonuclease Y mutations
 df <- snps

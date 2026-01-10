@@ -4,10 +4,10 @@
 library(tidyverse)
 library(cowplot)
 
-setwd("~/Documents/pitt/streppneumo/treat_association/")
+setwd("~/spn-evo/treat_association/")
 
 # Begin with snp df with snps fixed in the ancestral strain, <10%, and <100% or <200% cumulative frequency per lineage removed
-snps <- read.csv("~/Documents/pitt/streppneumo/post_breseq_filtering/output/snps_after_filtering.csv",header=TRUE)
+snps <- read.csv("~/spn-evo/post_breseq_filtering/output/snps_after_filtering.csv",header=TRUE)
 
 # subset only mutations that are in genes
 snps$type <- "gene"
@@ -236,7 +236,7 @@ combined <- plot_grid(top, bottom, ncol = 1, align = "v", rel_heights = c(2, 1.3
 combined
 
 # save 
-ggsave("combined.png", combined, width = 10, height = 11, dpi = 300, units = "in")
+ggsave("Figure1.png", combined, width = 10, height = 11, dpi = 300, units = "in")
 
 
 

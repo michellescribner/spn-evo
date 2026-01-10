@@ -8,28 +8,29 @@ setwd("/Users/mrs/Documents/pitt/streppneumo/post_breseq_filtering")
 #---------- Summary of Upstream Processing ------------------------
 
 # Prior to this step, sequencing reads were quality trimmed and filtered using Trimmomtic v0.36, (LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36) 
-# and variants were called using Breseq v0.35.0 with respect to the S. pneumoniae reference genome NC_003028
+# and variants were called using Breseq v0.35.0 with respect to the S. pneumoniae reference genome NC_003028.3
 
 #------------- Post Breseq Filtering ---------------------------
 
-# Read data
+#--- Read data---
 snps <- read.csv("raw_breseq_output/snps_combined.csv",header=TRUE)
 nrow(snps) # 973838
 mc <- read.csv("raw_breseq_output/mc_combined.csv",header=TRUE)
 nje <- read.csv("raw_breseq_output/nje_combined.csv",header=TRUE)
 
-# Remove samples with average read depth <30X
+#--- Remove samples with average read depth <30X ---
 # coverage was calculated using the number of mapped bases from breseq output.gd file, divided by the reference genome length (2160842)
 coverage <- read.csv("raw_breseq_output/coverage_results.csv",header=TRUE)
 # filter coverage file for samples with >=30X coverage
 high_coverage <- coverage %>%
   filter(average_cov >= 30) %>%
-  mutate(across(everything(), gsub, pattern = ".gd", replacement = ""))
+  mutate(sample_name = str_remove(sample_name, "\\.gd"))
 # filter variant data for only samples with coverage >= 30X
-snps <- snps[snps$sample %in% high_coverage$sample, ]
-nrow(snps) #966959
+snps <- snps %>%
+  filter(sample %in% high_coverage$sample)
+nrow(snps) # 966959
 
-# Clean sample names
+#--- Clean sample names ---
 clean_samplenames <- function(snps) {
   snps$sample <- gsub("CM", "CeM", snps$sample)
   snps$sample <- gsub("CN", "CeN", snps$sample)
@@ -70,17 +71,17 @@ clean_samplenames <- function(snps) {
 }
 snps <- clean_samplenames(snps)
 
-# Clean position column
+#--- Clean position column ---
 snps$position <- gsub(":1", "", as.character(snps$position))
 
-# Clean gene names
+#--- Clean gene names  ---
 snps$gene <- gsub(" <-", "", snps$gene)
 snps$gene <- gsub(" ->", "", snps$gene)
 snps$gene <- gsub(" ", "", snps$gene)
 
-# # Replace RefSeq locus tags with "SP_" locus tags if possible
+#--- Replace RefSeq locus tags with "SP_" locus tags if possible ---
 # Locus tag key below was made by parsing the gff3 file
-genes <- read.csv("~/Documents/pitt/streppneumo/variantcalling/breseqv35/TIGR4vApr2021_gff3_split.csv", header = TRUE, row.names = 1)
+genes <- read.csv("~/Documents/pitt/streppneumo/variantcalling/TIGR4vApr2021_gff3_split.csv", header = TRUE, row.names = 1)
 
 # coalesce finds the first non-missing element, so old locus tag column 
 # will be populated with the RefSeq locus tag if no old locus tag exists
@@ -115,7 +116,7 @@ snps_check <- snps %>%
   pivot_wider(id_cols = gen, names_from = lineage, values_from = freq, values_fn = list(freq = sum))
 write.csv(snps_check, file="output/sample_check.csv")
 
-# # Manually filter mutations based on dynamics. 
+#--- Manually filter mutations based on dynamics --- 
 # These mutations occur at intermediate frequencies with trajectories that are 
 # not possible given the trajectories of other mutations
 # first, save table of mutations
@@ -182,7 +183,7 @@ nrow(snps_noref) # 215164
 # some mutations at low frequencies may be real, but many may be mapping errors
 snps_10 <- subset(snps_noref, snps_noref$freq > 9.9)
 nrow(snps_10) # 76807
-length(unique(snps_10$gene_annot_desc)) # 12394
+length(unique(snps_10$gene_annot_desc)) # 12360
 write.csv(snps_10, file="output/snps_10.csv",row.names=FALSE)
 
 # Remove mutations that do not sum to at least 100% over all timepoints within a lineage

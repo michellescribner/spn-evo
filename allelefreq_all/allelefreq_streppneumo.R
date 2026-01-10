@@ -6,7 +6,7 @@ library(randomcoloR)
 
 # Begin with filtered data frame of SNPs 
 # In prior step, SNPs fixed in the ancestral strain, <10% in a sample, and <100% (15 passages) or <200% (29 passages) cumulative frequency per lineage were removed
-snps <- read.csv(file="~/Documents/pitt/streppneumo/post_breseq_filtering/output/snps_after_filtering.csv", header=TRUE)
+snps <- read.csv(file="~/spn-evo/post_breseq_filtering/output/snps_after_filtering.csv", header=TRUE)
 nrow(snps) 
 
 # Paste gene and annotation data
@@ -116,7 +116,26 @@ italic_if_not_SP <- function(x) {
 
 # Prepare data for plotting 
 
-setwd("~/Documents/pitt/streppneumo/allelefreq_all/facetbydrug_output_100cutoff")
+setwd("~/spn-evo/allelefreq_all/facetbydrug_output_100cutoff")
+
+# Create a named vector for substitution
+substitution <- c(
+  "Az" = "AZM",
+  "Ci" = "CIP",
+  "Im" = "IPM",
+  "Ce" = "CEF",
+  "Le" = "LVX",
+  "Li" = "LNZ",
+  "Ri" = "RIF",
+  "Va" = "VNC",
+  "Me" = "MEM",
+  "Pe" = "PEN"
+)
+
+# Replace values in 'Codes' column
+output <- output %>%
+  mutate(drug = substitution[drug]) %>%
+  mutate(lineage = paste(drug, immune, pop, sep = "-")) 
 
 plot_data <- output %>%
   filter(passage <= 29) %>%
@@ -131,7 +150,7 @@ colScale_parsed <- scale_colour_manual(name = "grp",
                                        labels = italic_if_not_SP)
 
 # Define drug column order (10 columns)
-desired_order <- c("Ci","Az","Im","Va","Ri","Pe","Me","Ce","Le","Li")
+desired_order <- c("CIP","AZM","IPM","VNC","RIF","PEN","MEM","CEF","LVX","LNZ")
 drugs <- intersect(desired_order, sort(unique(plot_data$drug)))
 if (length(drugs) == 0) stop("No matching drugs found in plot_data$drug")
 
@@ -196,11 +215,12 @@ panel_height_in <- 1.3
 out_width  <- max(8, n_drugs * panel_width_in)
 out_height <- max(6, n_rows * panel_height_in)
 
-ggsave(filename = "FigureS2.pdf",
+ggsave(filename = "FigureS2.png",
        plot = main_plot,
-       device = "pdf",
+       device = "png",
        width = out_width,
        height = out_height,
+       dpi = 300,
        units = "in",
        limitsize = FALSE)
 

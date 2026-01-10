@@ -7,16 +7,36 @@ library(grid) # for unit()
 
 # Begin with filtered data frame of SNPs 
 # In prior step, SNPs fixed in the ancestral strain, <10% in a sample, and <100% (15 passages) or <200% (29 passages) cumulative frequency per lineage were removed
-df <- readr::read_csv("~/Documents/pitt/streppneumo/post_breseq_filtering/output/snps_after_filtering.csv")
+df <- readr::read_csv("~/spn-evo/post_breseq_filtering/output/snps_after_filtering.csv")
 
 # Make column combining gene and description
 df <- df %>%
   mutate(desc_gene = paste(description, gene, sep = ":")) 
 
 # Designate order of lineages for plotting
-factors <- readr::read_csv("~/Documents/pitt/streppneumo/jaccard_index/treat_factors.csv")
+factors <- readr::read_csv("~/spn-evo/jaccard_index/treat_factors.csv")
 df <- left_join(df,factors) %>%
   arrange(order)
+
+# Create a named vector for substitution
+substitution <- c(
+  "Az" = "AZM",
+  "Ci" = "CIP",
+  "Im" = "IPM",
+  "Ce" = "CEF",
+  "Le" = "LVX",
+  "Li" = "LNZ",
+  "Ri" = "RIF",
+  "Va" = "VNC",
+  "Me" = "MEM",
+  "Pe" = "PEN"
+)
+
+# Replace values in 'Codes' column
+df <- df %>%
+  mutate(drug = substitution[drug]) %>%
+  mutate(treat = paste(drug, immune, sep = "-")) %>%
+  mutate(lineage = paste(treat, pop, sep = "")) 
 
 # Pivot so genes are rows, lineages are columns, values are sum of mutation frequency within the gene
 gene_by_lineage <- df %>%
@@ -34,6 +54,8 @@ gene_by_lineage <- t(gene_by_lineage)
 jacc_diss <- as.matrix(vegdist(gene_by_lineage, method="jaccard", binary=TRUE)) 
 jacc_sim <- 1-jacc_diss
 diag(jacc_sim) <- 1
+
+write.csv(jacc_sim, file = "jaccard_similarity_matrix.csv", row.names = TRUE)
 
 # Numeric plotting positions: left-to-right for columns; top-to-bottom for rows (so reverse rows)
 col_names <- colnames(jacc_sim)
@@ -82,7 +104,7 @@ row_centers <- row_meta %>%
 # Make the plot
 p_jaccard <- ggplot(long_df, aes(x = x, y = y, fill = value)) +
   geom_raster() +                             
-  scale_fill_viridis_c(name = "Jaccard\nSimilarity\n", na.value = "white") +
+  scale_fill_distiller(palette = "YlGnBu", direction = 1, name = "Jaccard\nSimilarity\n", na.value = "white") +
   # show one label per treatment at the computed centers
   scale_x_continuous(
     breaks = col_centers$center,
@@ -131,3 +153,4 @@ p_jaccard_withlegend <- p_jaccard +
   )
 
 p_jaccard_withlegend
+
